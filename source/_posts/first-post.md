@@ -12,4 +12,4 @@ I'm going to try and do devlogs for any significant projects I start. I have man
 I've done some projects in the past with varying levels of success. I used to make Nintendo DS homebrew games. 
 
 ### About Me
-Where you can find me on social media and other places around the web.
+Info about me and where you can find me on social media and other places around the web.
