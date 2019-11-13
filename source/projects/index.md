@@ -2,7 +2,7 @@
 title: Projects
 ---
 
-## MTG Remote
+## [MTG Remote](https://mtgremote.tomsweeney.ca)
 
 My friends and I started playing Magic: The Gathering over webcam using Google Hangouts. We needed a way to easily display life totals and cards on the hangout stream so I developed a tool to do just that. It allows 
 
