@@ -2,9 +2,9 @@
 title: Projects
 ---
 
-## [MTG Remote](https://mtgremote.tomsweeney.ca)
+## [MTG Remote](/2020/03/20/projects/mtgremote/)
 
-My friends and I started playing Magic: The Gathering over webcam using Google Hangouts. We needed a way to easily display life totals and cards on the hangout stream so I developed a tool to do just that. It allows 
+My friends and I started playing Magic: The Gathering over webcam using Google Hangouts. We needed a way to easily display life totals and cards on the hangout stream so I developed a tool to do just that.
 
 ## Tetra Master DS
 
