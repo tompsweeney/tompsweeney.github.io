@@ -30,6 +30,12 @@ Future versions will include:
 
 If you like this project and would like to donate to help fund server costs, you can do so here:
 
+Patreon:
+[https://patreon.com/tomsweeney](https://patreon.com/tomsweeney)
+
+Paypal:
+[https://paypal.me/tompsweeney](https://paypal.me/tompsweeney)
+
 Bitcoin wallet: 
 [bc1qent8dn3pyyzxlfz0sqpn9ttcdkn7p63zllrycy](bitcoin:bc1qent8dn3pyyzxlfz0sqpn9ttcdkn7p63zllrycy)
 ![](/images/donate_qr.png)
