@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Chaos Spinner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <center><img src="images/chaos_spinner.png"></center>
+    </header>
+
+    <main>
+      <div id="wheel-viewport" class="wheel-viewport">
+        <div id="wheel" class="wheel"></div>
+      </div>
+    </main>
+
+    <footer>
+      <button id="spin-btn" class="spin-btn">SPIN</button>
+    </footer>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <img id="modal-img" src="" alt="Selected pack">
+      <button id="modal-close">Dismiss</button>
+    </div>
+  </div>
+
+  <script>
+  // Inlined app script (modified to avoid cross-origin HEAD requests)
+  const DEFAULT_IMAGE = 'images/resized/';
+  const PACK_LIST = 'RTR,GTC,DGM,BNG,JOU,M15,KTK,FRF,BFZ,OGW,SOI,EMN,CN2,AER,AKH,HOU,XLN,RIX,DOM,BBD,M19,GRN,RNA,WAR,M20,ELD,IKO,THB,M21,ZNR,KHM,STX,AFR,MID,VOW,NEO,SNC,DMU,BRO,ONE,MOM,LTR,WOE,LCI,MKM,OTJ,BLB,DSK,FDN,DFT,TDM,FIN,EOE,SPM,TLA';
+
+  const imageCache = new Map();
+  let packs = []; // array of {code, imgSrc, id}
+
+  const elements = {
+    wheel: document.getElementById('wheel'),
+    spinBtn: document.getElementById('spin-btn'),
+    modal: document.getElementById('modal'),
+    modalImg: document.getElementById('modal-img'),
+    modalClose: document.getElementById('modal-close')
+  };
+
+  function parseInput(text){
+    if(!text) return [];
+    // split by comma or newline
+    return text.split(/[,\n]+/).map(s=>s.trim()).filter(Boolean);
+  }
+
+  function setLoading(enabled){
+    elements.spinBtn.disabled = enabled || packs.length===0;
+  }
+
+  // Use Image preloading to detect whether Scryfall set symbol exists
+  async function fetchPackImage(code){
+    const key = code.toLowerCase();
+    if(imageCache.has(key)) return imageCache.get(key);
+    const symbolUrl = `images/resized/${key}.png`;
+    return new Promise((resolve)=>{
+      const img = new Image();
+      img.onload = ()=>{ imageCache.set(key, symbolUrl); resolve(symbolUrl); };
+      img.onerror = ()=>{ imageCache.set(key, DEFAULT_IMAGE); resolve(DEFAULT_IMAGE); };
+      img.src = symbolUrl;
+    });
+  }
+
+  function uid(){return Math.random().toString(36).slice(2,9)}
+
+  async function loadPacksFromInput(){
+    const codes = parseInput(PACK_LIST);
+    packs = [];
+    setLoading(true);
+    for(const c of codes){
+      const img = await fetchPackImage(c);
+      packs.push({code:c, imgSrc:img, id:uid()});
+    }
+    setLoading(false);
+    renderWheel();
+  }
+
+  function renderWheel(){
+    elements.wheel.innerHTML = '';
+    if(packs.length===0) return;
+    // To create seamless feel, render three copies of the packs sequence.
+    const totalCopies = 3;
+    for(let copy=0;copy<totalCopies;copy++){
+      for(const p of packs){
+        const el = document.createElement('div');
+        el.className = 'pack';
+        el.dataset.packId = p.id;
+        const img = document.createElement('img');
+        img.src = p.imgSrc;
+        img.alt = p.code;
+        el.appendChild(img);
+        elements.wheel.appendChild(el);
+      }
+    }
+
+    // After images load, position wheel at the start (first copy visible)
+    const imgs = elements.wheel.querySelectorAll('img');
+    let loaded = 0;
+    function tryCenter(){
+      loaded++;
+      if(loaded < imgs.length) return;
+      // Start at first copy (translateX = 0)
+      elements.wheel.style.transition = 'none';
+      elements.wheel.style.transform = `translateX(0px)`;
+      // allow transitions later
+      requestAnimationFrame(()=>{ elements.wheel.style.transition = ''; });
+    }
+
+    if(imgs.length===0) tryCenter();
+    imgs.forEach(img=>{
+      if(img.complete) tryCenter();
+      else img.addEventListener('load', tryCenter);
+    });
+  }
+
+  function pickRandomPack(){
+    if(packs.length===0) return null;
+    const idx = Math.floor(Math.random()*packs.length);
+    return {index:idx, pack:packs[idx]};
+  }
+
+  function animateWheelToPack(targetPackId, duration=3000){
+    return new Promise((resolve)=>{
+      const wheel = elements.wheel;
+      const items = Array.from(wheel.children);
+      const n = packs.length;
+      if(n===0){ resolve(); return; }
+      // Find target in first copy (indices 0..n-1)
+      let targetIndex = -1;
+      for(let i=0;i<n;i++){
+        if(items[i] && items[i].dataset.packId===targetPackId){ targetIndex = i; break; }
+      }
+      if(targetIndex===-1){ resolve(); return; }
+
+      const viewport = document.getElementById('wheel-viewport');
+      const viewportRect = viewport.getBoundingClientRect();
+      const wheelRect = wheel.getBoundingClientRect();
+
+      const itemRect = items[targetIndex].getBoundingClientRect();
+      // current translateX
+      const style = getComputedStyle(wheel);
+      const matrix = style.transform === 'none' ? null : new DOMMatrixReadOnly(style.transform);
+      const currentX = matrix ? matrix.m41 : 0;
+
+      const itemCenter = (itemRect.left - wheelRect.left) + itemRect.width/2;
+      const viewportCenter = viewportRect.width/2;
+      const neededShift = viewportCenter - itemCenter;
+      const endX = currentX + neededShift;
+
+      // compute width of one copy
+      let copyWidth = 0;
+      for(let i=0;i<n;i++){
+        const r = items[i].getBoundingClientRect();
+        copyWidth += r.width + parseFloat(getComputedStyle(wheel).gap || 12);
+      }
+
+      const extraSpins = Math.max(1, Math.floor(Math.random()*3)+1); // 1-3 extra full copies
+      const finalEndX = endX - extraSpins * copyWidth;
+
+      const startTime = performance.now();
+      function easeOutQuart(t){return 1-Math.pow(1-t,4)}
+      
+      // Track offset applied for seamless looping during animation
+      let loopOffset = 0;
+      
+      function frame(now){
+        const t = Math.min(1,(now-startTime)/duration);
+        const eased = easeOutQuart(t);
+        const cur = currentX + (finalEndX - currentX)*eased + loopOffset;
+        
+        // Seamless looping: when we've scrolled past copy 1, jump back
+        // Check if we've gone past -copyWidth (end of copy 1)
+        if(cur <= -copyWidth && loopOffset === 0){
+          loopOffset = copyWidth;
+          wheel.style.transition = 'none';
+          wheel.style.transform = `translateX(${cur + loopOffset}px)`;
+        } else if(cur + loopOffset <= -2 * copyWidth && loopOffset === copyWidth){
+          loopOffset = 2 * copyWidth;
+          wheel.style.transition = 'none';
+          wheel.style.transform = `translateX(${cur + loopOffset}px)`;
+        } else {
+          wheel.style.transform = `translateX(${cur}px)`;
+        }
+        
+        if(t<1) requestAnimationFrame(frame);
+        else {
+          // After animation completes, reposition wheel to equivalent position in first copy
+          const equivalentX = endX - 2 * copyWidth;
+          wheel.style.transition = 'none';
+          wheel.style.transform = `translateX(${equivalentX}px)`;
+          requestAnimationFrame(()=>{ wheel.style.transition = ''; });
+          resolve();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  async function spin(){
+    if(packs.length===0) return;
+    elements.spinBtn.disabled = true;
+    
+    // Play spin audio
+    const audio = new Audio('audio/spin.wav');
+    audio.play().catch(()=>{/*audio playback failed*/});
+    
+    const pick = pickRandomPack();
+    if(!pick) return;
+    await animateWheelToPack(pick.pack.id, 5500);
+    showModal(pick.pack);
+  }
+
+  function showModal(pack){
+    elements.modalImg.src = pack.imgSrc;
+    elements.modal.classList.remove('hidden');
+    // remove the pack from packs so it's not available next spins
+    packs = packs.filter(p=>p.id!==pack.id);
+  }
+
+  function hideModal(){
+    elements.modal.classList.add('hidden');
+    renderWheel();
+    elements.spinBtn.disabled = packs.length===0;
+  }
+
+  elements.spinBtn.addEventListener('click', ()=>{ spin(); });
+
+  elements.modalClose.addEventListener('click', hideModal);
+
+  // Spacebar activates spin
+  document.addEventListener('keydown', (e)=>{
+    if(e.code === 'Space' && !elements.spinBtn.disabled){
+      e.preventDefault();
+      spin();
+    }
+  });
+
+  loadPacksFromInput();
+  </script>
+</body>
+</html>
