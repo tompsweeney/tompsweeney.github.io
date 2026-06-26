@@ -36,7 +36,8 @@
   // Additions, THS, DTK, KLD, ORI
   const DEFAULT_IMAGE = 'images/resized/';
   // const PACK_LIST = 'RTR,GTC,DGM,THS,BNG,JOU,M15,KTK,FRF,DTK,ORI,BFZ,OGW,SOI,EMN,CN2,KLD,AER,AKH,HOU,XLN,RIX,DOM,BBD,M19,GRN,RNA,WAR,M20,ELD,IKO,THB,M21,ZNR,KHM,STX,AFR,MID,VOW,SNC,DMU,BRO,ONE,MOM,LTR,WOE,NEO,LCI,MKM,OTJ,BLB,DSK,FDN,DFT,TDM,FIN,EOE,SPM,TLA';
-  const PACK_LIST = 'CONF, ARB, AVR, RTR, GTC, DGM, THS, BNG, M15, KTK, FRF, DTK, ORI, BFZ, OGW, SOI, EMN, CN2, KLD, AER, AKH, HOU, XLN, RIX, DOM, BBD, M19, GRN, RNA, WAR, M20, ELD, IKO, M21, ZNR, KHM, STX, AFR, MID, VOW, NEO, SNC, DMU, BRO, ONE, MOM, WOE, LCI, MKM, OTJ, BLB, DSK, FDN, DFT, TDM, FIN, EOE, SPM, TLA, ECL, TMT';
+  // const PACK_LIST = 'CONF, ARB, AVR, RTR, GTC, DGM, THS, BNG, M15, KTK, FRF, DTK, ORI, BFZ, OGW, SOI, EMN, CN2, KLD, AER, AKH, HOU, XLN, RIX, DOM, BBD, M19, GRN, RNA, WAR, M20, ELD, IKO, M21, ZNR, KHM, STX, AFR, MID, VOW, NEO, SNC, DMU, BRO, ONE, MOM, WOE, LCI, MKM, OTJ, BLB, DSK, FDN, DFT, TDM, FIN, EOE, SPM, TLA, ECL, TMT';
+  const PACK_LIST = 'AER, AFR, AKH, ARB, AVR, BBD, BFZ, BLB, BNG, BRO, CN2, CNS, CONF, DFT, DGM, DKA, DMU, DOM, DSK, DTK, ELD, EMN, EOE, FDN, FIN, FRF, GRN, GTC, HOU, IKO, JOU, KHM, KLD, KTK, LCI, M14, M15, M19, M20, M21, MID, MKM, MOM, NEO, OGW, ONE, ORI, OTJ, RNA, RIX, RTR, SNC, SOI, STX, THB, THS, TDM, UNF, VOW, WAR, WOE, XLN, ZNR, TLA, ECL, SPM, TMT, SOS, MSH';
 
   const imageCache = new Map();
   let packs = []; // array of {code, imgSrc, id}
@@ -238,11 +239,16 @@
 
   elements.modalClose.addEventListener('click', hideModal);
 
-  // Spacebar activates spin
+  // Spacebar activates spin or dismisses modal if visible
   document.addEventListener('keydown', (e)=>{
-    if(e.code === 'Space' && !elements.spinBtn.disabled){
+    if(e.code === 'Space'){
       e.preventDefault();
-      spin();
+      // If modal is visible, dismiss it; otherwise spin
+      if(!elements.modal.classList.contains('hidden')){
+        hideModal();
+      } else if(!elements.spinBtn.disabled){
+        spin();
+      }
     }
   });
 
